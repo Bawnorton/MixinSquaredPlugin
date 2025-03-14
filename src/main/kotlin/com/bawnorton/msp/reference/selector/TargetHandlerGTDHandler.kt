@@ -15,13 +15,13 @@ class TargetHandlerGTDHandler : GotoDeclarationHandler {
         if (sourceElement == null) return null
         val stringLiteral = sourceElement.parentOfType<PsiLiteral>() ?: return null
         if (TargetHandlerMixinReference.ELEMENT_PATTERN.accepts(stringLiteral)) {
-            return TargetHandlerMixinReference.resolveNavigationTargets(stringLiteral)
+            return TargetHandlerMixinReference.resolveForNavigation(stringLiteral)
         }
         if (TargetHandlerNameReference.ELEMENT_PATTERN.accepts(stringLiteral)) {
-            return TargetHandlerNameReference.resolveNavigationTargets(stringLiteral)
+            return TargetHandlerNameReference.resolveForNavigation(stringLiteral)
         }
         if (TargetHandlerPrefixReference.ELEMENT_PATTERN.accepts(stringLiteral)) {
-            return TargetHandlerPrefixReference.resolveNavigationTargets(stringLiteral)
+            return TargetHandlerPrefixReference.resolveForNavigation(stringLiteral)
         }
         return null
     }

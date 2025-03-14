@@ -32,31 +32,23 @@ repositories {
     mavenCentral()
 }
 
-// Configure Gradle IntelliJ Plugin
-// Read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
 intellij {
     version.set(mcdevIdeaVersion)
     type.set("IC")
 
-    plugins.set(listOf("java", "maven", "gradle", "Groovy", "Kotlin", "ByteCodeViewer", "properties"))
+    plugins.addAll("java", "maven", "gradle", "Groovy", "ByteCodeViewer", "properties")
 
     // Mcdev
     plugins.add("com.demonwav.minecraft-dev:$mcdevIdeaVersion-$mcdevVersion")
 }
 
 tasks {
-    // Set the JVM compatibility versions
     withType<JavaCompile> {
         sourceCompatibility = "17"
         targetCompatibility = "17"
     }
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
         kotlinOptions.jvmTarget = "17"
-    }
-
-    patchPluginXml {
-        sinceBuild.set("231")
-        untilBuild.set("241.*")
     }
 
     signPlugin {

@@ -1,3 +1,5 @@
+@file:Suppress("UnusedReceiverParameter")
+
 package com.bawnorton.msp.util
 
 import com.demonwav.mcdev.platform.mixin.util.MixinConstants

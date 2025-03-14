@@ -25,8 +25,28 @@
 
 <!-- https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
     <extensions defaultExtensionNs="com.intellij">
+        <!-- FOLDING -->
         <applicationService serviceImplementation="com.bawnorton.msp.folding.MSFoldingSettings"/>
+        <lang.foldingBuilder language="JAVA"
+                             implementationClass="com.bawnorton.msp.folding.MSTargetHandlerMixinFoldingBuilder"/>
         <codeFoldingOptionsProvider instance="com.bawnorton.msp.folding.MSFoldingOptionsProvider"/>
+
+        <!-- GOTO -->
+        <gotoDeclarationHandler implementation="com.bawnorton.msp.reference.selector.TargetHandlerGTDHandler"/>
+
+        <!-- REF -->
+        <psi.referenceContributor language="JAVA"
+                                  implementation="com.bawnorton.msp.reference.TargetHandlerReferenceContributor"/>
+
+        <!-- INSPECTIONS -->
+        <localInspection language="JAVA"
+                         displayName="@TargetHandler too early"
+                         shortName="TargetHandlerTooEarly"
+                         groupName="MixinSquared"
+                         enabledByDefault="true"
+                         level="ERROR"
+                         hasStaticDescription="true"
+                         implementationClass="com.bawnorton.msp.inspection.TargetHandlerTooEarlyInspection"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.demonwav.minecraft-dev">

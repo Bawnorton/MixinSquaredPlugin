@@ -10,9 +10,9 @@ import com.demonwav.mcdev.util.*
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifierList
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.util.parentOfType
+import com.intellij.psi.util.PsiTreeUtil
 import org.objectweb.asm.tree.ClassNode
 
 // @MixinSquared:Handler
@@ -24,29 +24,8 @@ class TargetHandlerSelectorParser : DynamicSelectorParser("MixinSquared:Handler"
     }
 
     private fun findTargetHandlerAnnotation(context: PsiElement): PsiAnnotation? {
-        val method = context.parentOfType<PsiMethod>() ?: return null
-        return method.findAnnotation(MixinSquaredConstants.TARGET_HANDLER)
-    }
-
-    companion object {
-        fun targetHandlerSelectorFromAnnotation(targetHandlerAnnotation: PsiAnnotation): TargetHandlerSelector? {
-            val targetMixin = targetHandlerAnnotation.findAttributeValue("mixin")
-                ?.constantStringValue ?: return null
-
-            val targetMethod = targetHandlerAnnotation.findAttributeValue("name") ?: return null
-            val selector = parseMixinSelector(targetMethod)
-            if (selector !is MemberReference) return null // Don't try to match other selector references
-
-            var prefix = targetHandlerAnnotation.findAttributeValue("prefix")?.constantStringValue
-            if (prefix.isNullOrEmpty()) prefix = null
-            return TargetHandlerSelector(
-                targetHandlerAnnotation.project,
-                targetMixin,
-                selector.name,
-                selector.descriptor,
-                prefix
-            )
-        }
+        val modifierList = PsiTreeUtil.getParentOfType(context, PsiModifierList::class.java) ?: return null
+        return modifierList.findAnnotation(MixinSquaredConstants.TARGET_HANDLER)
     }
 }
 
@@ -93,4 +72,23 @@ data class TargetHandlerSelector(
     override val methodDescriptor = desc
     override val fieldDescriptor = null
     override val owner = mixinName.replace('.', '/')
+}
+
+fun targetHandlerSelectorFromAnnotation(targetHandlerAnnotation: PsiAnnotation): TargetHandlerSelector? {
+    val targetMixin = targetHandlerAnnotation.findAttributeValue("mixin")
+        ?.constantStringValue ?: return null
+
+    val targetMethod = targetHandlerAnnotation.findAttributeValue("name") ?: return null
+    val selector = parseMixinSelector(targetMethod)
+    if (selector !is MemberReference) return null // Don't try to match other selector references
+
+    var prefix = targetHandlerAnnotation.findAttributeValue("prefix")?.constantStringValue
+    if (prefix.isNullOrEmpty()) prefix = null
+    return TargetHandlerSelector(
+        targetHandlerAnnotation.project,
+        targetMixin,
+        selector.name,
+        selector.descriptor,
+        prefix
+    )
 }
