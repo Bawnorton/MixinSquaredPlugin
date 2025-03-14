@@ -1,24 +1,28 @@
 package com.bawnorton.msp.reference.selector
 
-import com.bawnorton.msp.util.MixinSquaredConstants
 import com.bawnorton.msp.handlers.TargetHandlerResolver
+import com.bawnorton.msp.util.MixinSquaredConstants
 import com.bawnorton.msp.util.getPossiblePrefixes
 import com.demonwav.mcdev.platform.mixin.reference.MixinReference
 import com.demonwav.mcdev.platform.mixin.util.findSourceClass
+import com.demonwav.mcdev.platform.mixin.util.mixinTargets
+import com.demonwav.mcdev.util.computeStringArray
 import com.demonwav.mcdev.util.constantStringValue
+import com.demonwav.mcdev.util.fullQualifiedName
 import com.demonwav.mcdev.util.insideAnnotationAttribute
 import com.demonwav.mcdev.util.reference.PolyReferenceResolver
-import com.intellij.codeInsight.AutoPopupController
+import com.demonwav.mcdev.util.resolveClassArray
 import com.intellij.openapi.project.Project
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PsiJavaPatterns
 import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementResolveResult
 import com.intellij.psi.PsiLiteral
 import com.intellij.psi.ResolveResult
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
+import com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex
 import com.intellij.psi.util.parentOfType
 
 abstract class AbstractTargetHandlerReference : PolyReferenceResolver(), MixinReference {
@@ -53,7 +57,24 @@ object TargetHandlerMixinReference : AbstractTargetHandlerReference() {
     }
 
     override fun collectVariants(context: PsiElement): Array<Any> {
-        return emptyArray()
+        val project = context.project
+        val scope = context.resolveScope
+
+        val enclosingClass = context.parentOfType<PsiClass>() ?: return emptyArray()
+        val mixinTargets = enclosingClass.mixinTargets.map { it.name.replace("/", ".") }
+
+        val allMixinAnnotations = JavaAnnotationIndex.getInstance().getAnnotations("Mixin", project, scope)
+        val ownerToTargets = allMixinAnnotations.map { mixinAnnotation ->
+            val owningMixin = mixinAnnotation.parentOfType<PsiClass>()
+            val literalClassTargets = mixinAnnotation.findDeclaredAttributeValue(null)?.resolveClassArray()?.mapNotNull { it.qualifiedName }
+            val stringClassTargets = mixinAnnotation.findDeclaredAttributeValue("targets")?.computeStringArray()
+            val targets = (literalClassTargets ?: emptyList()) + (stringClassTargets ?: emptyList())
+            owningMixin to targets
+        }.filter { it.first != null }
+
+        return ownerToTargets.filter {
+            it.second.intersect(mixinTargets).isNotEmpty() == true
+        }.map { it.first?.qualifiedName!! }.toTypedArray()
     }
 }
 
