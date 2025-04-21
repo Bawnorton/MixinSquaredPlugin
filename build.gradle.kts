@@ -1,7 +1,7 @@
 plugins {
     id("java")
     id("org.jetbrains.kotlin.jvm") version "2.1.0"
-    id("org.jetbrains.intellij") version "1.16.1"
+    id("org.jetbrains.intellij.platform") version "2.5.0"
 }
 
 val mcdevVersion: String by project
@@ -30,27 +30,46 @@ repositories {
         }
     }
     mavenCentral()
+    intellijPlatform {
+        defaultRepositories()
+    }
 }
 
-intellij {
-    version.set(mcdevIdeaVersion)
-    type.set("IC")
 
-    plugins.addAll("java", "maven", "gradle", "Groovy", "ByteCodeViewer", "properties")
+intellijPlatform {
+    pluginConfiguration {
+        name = "MixinSquared"
+    }
+}
 
-    // Mcdev
-    plugins.add("com.demonwav.minecraft-dev:$mcdevIdeaVersion-$mcdevVersion")
+dependencies {
+    intellijPlatform {
+        create("IC", mcdevIdeaVersion)
+        plugins("com.demonwav.minecraft-dev:$mcdevIdeaVersion-$mcdevVersion")
+        bundledPlugins(
+            "com.intellij.java",
+            "org.jetbrains.idea.maven",
+            "com.intellij.gradle",
+            "org.intellij.groovy",
+            "com.intellij.properties",
+            "ByteCodeViewer"
+        )
+    }
+}
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
+
+kotlin {
+    jvmToolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
 }
 
 tasks {
-    withType<JavaCompile> {
-        sourceCompatibility = "17"
-        targetCompatibility = "17"
-    }
-    withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-        kotlinOptions.jvmTarget = "17"
-    }
-
     signPlugin {
         certificateChain.set(System.getenv("CERTIFICATE_CHAIN"))
         privateKey.set(System.getenv("PRIVATE_KEY"))
