@@ -1,7 +1,7 @@
 <idea-plugin require-restart="true">
 
-    <id>com.bawnorton.msp.MixinSquaredPlugin</id>
-    <name>MixinSquaredPlugin</name>
+    <id>com.bawnorton.msp.MixinSquared</id>
+    <name>MixinSquared</name>
     <vendor email="msp@bawnorton.com" url="https://github.com/Bawnorton/MixinSquaredPlugin">Bawnorton</vendor>
 
 <!-- https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->

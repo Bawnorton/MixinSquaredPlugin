@@ -1,4 +1,5 @@
 .gradle
+sources/
 .run
 build/
 !gradle/wrapper/gradle-wrapper.jar
