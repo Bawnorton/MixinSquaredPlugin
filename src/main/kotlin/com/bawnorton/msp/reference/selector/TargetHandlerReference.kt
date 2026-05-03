@@ -6,22 +6,16 @@ import com.bawnorton.msp.util.getPossiblePrefixes
 import com.demonwav.mcdev.platform.mixin.reference.MixinReference
 import com.demonwav.mcdev.platform.mixin.util.findSourceClass
 import com.demonwav.mcdev.platform.mixin.util.mixinTargets
-import com.demonwav.mcdev.util.computeStringArray
-import com.demonwav.mcdev.util.constantStringValue
-import com.demonwav.mcdev.util.fullQualifiedName
-import com.demonwav.mcdev.util.insideAnnotationAttribute
+import com.demonwav.mcdev.util.*
 import com.demonwav.mcdev.util.reference.PolyReferenceResolver
-import com.demonwav.mcdev.util.resolveClassArray
+import com.demonwav.mcdev.util.reference.completeToLiteral
+import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.project.Project
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PsiJavaPatterns
 import com.intellij.patterns.StandardPatterns
-import com.intellij.psi.PsiAnnotation
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiElementResolveResult
-import com.intellij.psi.PsiLiteral
-import com.intellij.psi.ResolveResult
+import com.intellij.psi.*
+import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex
 import com.intellij.psi.util.parentOfType
 
@@ -72,9 +66,27 @@ object TargetHandlerMixinReference : AbstractTargetHandlerReference() {
             owningMixin to targets
         }.filter { it.first != null }
 
-        return ownerToTargets.filter {
-            it.second.intersect(mixinTargets).isNotEmpty() == true
-        }.map { it.first?.qualifiedName!! }.toTypedArray()
+        return ownerToTargets.filter { it.second.intersect(mixinTargets.toSet()).isNotEmpty() }
+            .map { it.first?.qualifiedName!! }
+            .filter { it != enclosingClass.qualifiedName }
+            .map { LookupElementBuilder.create(it).completeMixin(context) }
+            .toTypedArray()
+    }
+
+    private fun LookupElementBuilder.completeMixin(context: PsiElement): LookupElementBuilder {
+        return completeToLiteral(context) { editor, reference ->
+            val modifierList = reference.findContainingModifierList() ?: return@completeToLiteral
+            val annotation = modifierList.findAnnotation(MixinSquaredConstants.TARGET_HANDLER) ?: return@completeToLiteral
+
+            val project = reference.project
+            val elementFactory = JavaPsiFacade.getElementFactory(project)
+            val emptyExpr = elementFactory.createExpressionFromText("\"\"", null)
+            annotation.setDeclaredAttributeValue("name", emptyExpr)
+            val formattedAnnotation = CodeStyleManager.getInstance(project).reformat(annotation) as PsiAnnotation
+
+            val targetHandlerLiteral = formattedAnnotation.findDeclaredAttributeValue("name") ?: return@completeToLiteral
+            editor.caretModel.moveToOffset(targetHandlerLiteral.textRange.startOffset + 1)
+        }
     }
 }
 

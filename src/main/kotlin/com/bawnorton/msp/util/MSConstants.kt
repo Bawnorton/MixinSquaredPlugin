@@ -6,6 +6,7 @@ import com.demonwav.mcdev.platform.mixin.util.MixinConstants
 
 object MixinSquaredConstants {
     const val TARGET_HANDLER = "com.bawnorton.mixinsquared.TargetHandler"
+    const val PACKAGE = "com.bawnorton.mixinsquared"
 }
 
 val MixinConstants.MixinExtras.MODIFY_EXPRESSION_VALUE: String

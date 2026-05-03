@@ -8,9 +8,9 @@ import com.intellij.openapi.components.Storage
 @State(name = "MixinSquaredFoldingSettings", storages = [Storage("mixin_squared.xml")])
 class MSFoldingSettings : PersistentStateComponent<MSFoldingSettings.State> {
 
-    data class State(
-        var foldTargetHandlerMixin: Boolean = true
-    )
+    class State {
+        var foldTargetHandler: Boolean = false
+    }
 
     private var state = State()
 

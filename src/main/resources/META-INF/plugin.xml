@@ -31,12 +31,16 @@
                              implementationClass="com.bawnorton.msp.folding.MSTargetHandlerMixinFoldingBuilder"/>
         <codeFoldingOptionsProvider instance="com.bawnorton.msp.folding.MSFoldingOptionsProvider"/>
 
-        <!-- GOTO -->
-        <gotoDeclarationHandler implementation="com.bawnorton.msp.reference.selector.TargetHandlerGTDHandler"/>
-
-        <!-- REF -->
+        <!-- COMPLETION -->
         <psi.referenceContributor language="JAVA"
                                   implementation="com.bawnorton.msp.reference.TargetHandlerReferenceContributor"/>
+
+        <gotoDeclarationHandler implementation="com.bawnorton.msp.reference.selector.TargetHandlerGTDHandler"/>
+
+
+        <completion.confidence language="JAVA"
+                               implementationClass="com.bawnorton.msp.completion.MSCompletionConfidence"
+                               order="before javaSkipAutopopupInStrings"/>
 
         <!-- INSPECTIONS -->
         <localInspection language="JAVA"
@@ -50,6 +54,7 @@
     </extensions>
 
     <extensions defaultExtensionNs="com.demonwav.minecraft-dev">
-        <mixinSelectorParser implementation="com.bawnorton.msp.reference.TargetHandlerSelectorParser"/>
+        <mixinSelectorParser implementation="com.bawnorton.msp.reference.TargetHandlerSelectorParser"
+                             order="last"/>
     </extensions>
 </idea-plugin>

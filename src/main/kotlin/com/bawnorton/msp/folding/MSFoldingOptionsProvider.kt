@@ -9,9 +9,8 @@ class MSFoldingOptionsProvider : BeanConfigurable<MSFoldingSettings.State>(MSFol
 
         val settings = MSFoldingSettings.instance
         checkBox(
-            "@TargetHandler mixin field",
-            { settings.state.foldTargetHandlerMixin },
-            { b -> settings.state.foldTargetHandlerMixin = b },
+            "@TargetHandler's fields",
+            settings.state::foldTargetHandler
         )
     }
 }

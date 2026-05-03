@@ -1,12 +1,14 @@
 plugins {
     id("java")
-    id("org.jetbrains.kotlin.jvm") version "2.1.0"
-    id("org.jetbrains.intellij.platform") version "2.5.0"
+    id("org.jetbrains.kotlin.jvm") version "2.2.0-RC2"
+    id("org.jetbrains.intellij.platform") version "2.13.1"
 }
 
 val mcdevVersion: String by project
 val mcdevIdeaVersion: String by project
 val coreVersion: String by project
+val useLocalMcdev: String by project
+val mcdevLocalPath: String by project
 
 group = "com.bawnorton.msp"
 version = "$coreVersion+$mcdevIdeaVersion-$mcdevVersion"
@@ -44,8 +46,19 @@ intellijPlatform {
 
 dependencies {
     intellijPlatform {
-        create("IC", mcdevIdeaVersion)
-        plugins("com.demonwav.minecraft-dev:$mcdevIdeaVersion-$mcdevVersion")
+        intellijIdea(mcdevIdeaVersion) {
+            useInstaller = false
+        }
+        if (useLocalMcdev.toBoolean()) {
+            val libsDir = file("$mcdevLocalPath/build/distributions")
+            val localJar = libsDir.listFiles()
+                ?.filter { it.name.endsWith("-local.zip") }
+                ?.maxByOrNull { it.lastModified() }
+                ?: error("No local MCDev build found in ${libsDir.absolutePath} — run ./gradlew buildPlugin in the MCDev project first")
+            localPlugin(localJar)
+        } else {
+            plugins("com.demonwav.minecraft-dev:$mcdevIdeaVersion-$mcdevVersion")
+        }
         bundledPlugins(
             "com.intellij.java",
             "org.jetbrains.idea.maven",
