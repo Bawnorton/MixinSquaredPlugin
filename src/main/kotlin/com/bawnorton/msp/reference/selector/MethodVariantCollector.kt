@@ -20,7 +20,6 @@
 
 package com.bawnorton.msp.reference.selector
 
-import com.demonwav.mcdev.platform.mixin.reference.toMixinString
 import com.demonwav.mcdev.platform.mixin.util.ClassAndMethodNode
 import com.demonwav.mcdev.platform.mixin.util.findOrConstructSourceMethod
 import com.demonwav.mcdev.platform.mixin.util.memberReference
