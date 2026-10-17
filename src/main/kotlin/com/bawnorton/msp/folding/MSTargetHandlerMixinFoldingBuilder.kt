@@ -17,7 +17,6 @@ import com.intellij.psi.JavaRecursiveElementWalkingVisitor
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiJavaFile
-import com.intellij.psi.PsiLiteralExpression
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiNameValuePair
 import com.intellij.psi.PsiSubstitutor
@@ -27,7 +26,6 @@ import com.intellij.psi.util.PsiFormatUtilBase.SHOW_CONTAINING_CLASS
 import com.intellij.psi.util.PsiFormatUtilBase.SHOW_NAME
 import com.intellij.psi.util.PsiFormatUtilBase.SHOW_PARAMETERS
 import com.intellij.psi.util.PsiFormatUtilBase.SHOW_TYPE
-import com.intellij.psi.util.PsiTreeUtil
 
 class MSTargetHandlerMixinFoldingBuilder : CustomFoldingBuilder() {
 
@@ -51,7 +49,7 @@ class MSTargetHandlerMixinFoldingBuilder : CustomFoldingBuilder() {
                         "L${mixinOwner.replace('.', '/')};" +
                                 element.text.substringAfter("\"").substringBeforeLast("\"")
                     )
-                return TargetReference.resolveTarget(ownerAttachedPsiElement)?.let { formatElement(it) }
+                return TargetReference.resolveTargets(ownerAttachedPsiElement).firstOrNull()?.let { formatElement(it) }
             }
             else -> return null
         }

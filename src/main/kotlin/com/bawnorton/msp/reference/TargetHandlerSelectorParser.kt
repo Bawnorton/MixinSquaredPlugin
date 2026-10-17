@@ -6,12 +6,22 @@ import com.bawnorton.msp.util.simulateMergeInto
 import com.demonwav.mcdev.platform.mixin.reference.DynamicSelectorParser
 import com.demonwav.mcdev.platform.mixin.reference.MixinSelector
 import com.demonwav.mcdev.platform.mixin.reference.parseMixinSelector
+import com.demonwav.mcdev.platform.mixin.util.MemberInfo
 import com.demonwav.mcdev.platform.mixin.util.bytecode
 import com.demonwav.mcdev.platform.mixin.util.mixinTargets
-import com.demonwav.mcdev.util.*
+import com.demonwav.mcdev.util.Quantifier
+import com.demonwav.mcdev.util.constantStringValue
+import com.demonwav.mcdev.util.descriptor
+import com.demonwav.mcdev.util.findContainingClass
+import com.demonwav.mcdev.util.findContainingModifierList
+import com.demonwav.mcdev.util.findQualifiedClass
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiLiteral
+import com.intellij.psi.PsiModifierList
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.search.GlobalSearchScope
@@ -66,6 +76,7 @@ data class TargetHandlerSelector(
     val name: String,
     val desc: String?,
     val prefix: String?,
+    override val quantifier: Quantifier = Quantifier.Exact(0, 1),
 ) : MixinSelector {
     /**
      * We want to resolve methods inside the target mixin, not the class that the @Mixin annotation specifies.
@@ -109,7 +120,8 @@ data class TargetHandlerSelector(
         return true
     }
 
-    override val displayName = name
+    override fun withQuantifier(quantifier: Quantifier) = copy(quantifier = quantifier)
+
     override val methodDescriptor = desc
     override val fieldDescriptor = null
     override val owner = mixinName.replace('.', '/')
@@ -121,7 +133,7 @@ fun targetHandlerSelectorFromAnnotation(targetHandlerAnnotation: PsiAnnotation, 
 
     val targetMethod = targetHandlerAnnotation.findAttributeValue("name") ?: return null
     val selector = parseMixinSelector(targetMethod)
-    if (selector !is MemberReference) return null // Don't try to match other selector references
+    if (selector !is MemberInfo) return null // Don't try to match other selector references
 
     var prefix = targetHandlerAnnotation.findAttributeValue("prefix")?.constantStringValue
     if (prefix.isNullOrEmpty()) prefix = null
@@ -129,7 +141,7 @@ fun targetHandlerSelectorFromAnnotation(targetHandlerAnnotation: PsiAnnotation, 
         targetHandlerAnnotation.project,
         targetMixin,
         mixinTargets,
-        selector.name,
+        selector.name ?: return null,
         selector.descriptor,
         prefix
     )
