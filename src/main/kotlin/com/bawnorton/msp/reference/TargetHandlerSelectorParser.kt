@@ -4,6 +4,7 @@ import com.bawnorton.msp.util.MixinSquaredConstants
 import com.bawnorton.msp.util.NamedMixinBytecode
 import com.bawnorton.msp.util.hasAnnotationByPrefix
 import com.bawnorton.msp.util.simulateMergeInto
+import com.demonwav.mcdev.platform.minecraft.fabricloom.FabricLoomData
 import com.demonwav.mcdev.platform.mixin.reference.DynamicSelectorParser
 import com.demonwav.mcdev.platform.mixin.reference.MixinSelector
 import com.demonwav.mcdev.platform.mixin.reference.parseMixinSelector
@@ -11,7 +12,6 @@ import com.demonwav.mcdev.platform.mixin.util.MemberInfo
 import com.demonwav.mcdev.platform.mixin.util.bytecode
 import com.demonwav.mcdev.platform.mixin.util.findSourceElement
 import com.demonwav.mcdev.platform.mixin.util.mixinTargets
-import com.demonwav.mcdev.platform.mcp.fabricloom.FabricLoomData
 import com.demonwav.mcdev.util.Quantifier
 import com.demonwav.mcdev.util.constantStringValue
 import com.demonwav.mcdev.util.descriptor
