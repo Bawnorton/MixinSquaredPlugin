@@ -6,6 +6,7 @@ import com.bawnorton.msp.util.hasAnnotationByPrefix
 import com.demonwav.mcdev.platform.mixin.reference.parseMixinSelector
 import com.demonwav.mcdev.platform.mixin.util.bytecode
 import com.demonwav.mcdev.platform.mixin.util.findOrConstructSourceMethod
+import com.demonwav.mcdev.platform.mixin.util.findSourceElement
 import com.demonwav.mcdev.util.constantStringValue
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiAnnotation
@@ -28,14 +29,14 @@ class TargetHandlerResolver(
         val selector = parseMixinSelector(targetMethodInfo) ?: return null
         val targetNodes = target.methods.filter { selector.matchMethod(it, target) }
         val sources = targetNodes.mapNotNull {
-            it.findOrConstructSourceMethod(
+            it.findSourceElement(
                 target,
                 targetHandler.project,
                 targetHandler.resolveScope,
                 canDecompile = true
             )
         }
-        return sources;
+        return sources
     }
 
     fun resolvePrefixTargets(prefix: String): List<PsiAnnotation>? {

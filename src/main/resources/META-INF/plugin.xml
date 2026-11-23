@@ -56,5 +56,6 @@
     <extensions defaultExtensionNs="com.demonwav.minecraft-dev">
         <mixinSelectorParser implementation="com.bawnorton.msp.reference.TargetHandlerSelectorParser"
                              order="last"/>
+        <shadowTargetResolver implementation="com.bawnorton.msp.handlers.EarlierMixinShadowTargetResolver"/>
     </extensions>
 </idea-plugin>

@@ -1,6 +1,7 @@
 package com.bawnorton.msp.reference
 
 import com.bawnorton.msp.util.MixinSquaredConstants
+import com.bawnorton.msp.util.NamedMixinBytecode
 import com.bawnorton.msp.util.hasAnnotationByPrefix
 import com.bawnorton.msp.util.simulateMergeInto
 import com.demonwav.mcdev.platform.mixin.reference.DynamicSelectorParser
@@ -8,12 +9,15 @@ import com.demonwav.mcdev.platform.mixin.reference.MixinSelector
 import com.demonwav.mcdev.platform.mixin.reference.parseMixinSelector
 import com.demonwav.mcdev.platform.mixin.util.MemberInfo
 import com.demonwav.mcdev.platform.mixin.util.bytecode
+import com.demonwav.mcdev.platform.mixin.util.findSourceElement
 import com.demonwav.mcdev.platform.mixin.util.mixinTargets
+import com.demonwav.mcdev.platform.mcp.fabricloom.FabricLoomData
 import com.demonwav.mcdev.util.Quantifier
 import com.demonwav.mcdev.util.constantStringValue
 import com.demonwav.mcdev.util.descriptor
 import com.demonwav.mcdev.util.findContainingClass
 import com.demonwav.mcdev.util.findContainingModifierList
+import com.demonwav.mcdev.util.findModule
 import com.demonwav.mcdev.util.findQualifiedClass
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -27,6 +31,9 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import org.objectweb.asm.tree.ClassNode
+import org.objectweb.asm.tree.MethodNode
+import org.jetbrains.plugins.gradle.util.GradleUtil
+import java.nio.file.Path
 
 // @MixinSquared:Handler
 
@@ -76,23 +83,35 @@ data class TargetHandlerSelector(
     val name: String,
     val desc: String?,
     val prefix: String?,
+    val mappingsPath: Path?,
     override val quantifier: Quantifier = Quantifier.Exact(0, 1),
 ) : MixinSelector {
-    /**
-     * We want to resolve methods inside the target mixin, not the class that the @Mixin annotation specifies.
-     */
     override fun getCustomOwner(owner: ClassNode): ClassNode {
         val mixin = findQualifiedClass(project, mixinName, GlobalSearchScope.allScope(project))?.bytecode
             ?: return owner
 
-        val result = mixin.simulateMergeInto(owner) {
+        val merged = mixin.simulateMergeInto(owner) {
             findQualifiedClass(
                 project,
                 it,
                 GlobalSearchScope.allScope(project)
             )?.bytecode
         }
-        return result
+        return mappingsPath?.let { NamedMixinBytecode.remap(merged, it) } ?: merged
+    }
+
+    override fun findSourceMethod(
+        owner: ClassNode,
+        method: MethodNode,
+        project: Project,
+        scope: GlobalSearchScope,
+        canDecompile: Boolean,
+    ): PsiElement? {
+        val mixin = findQualifiedClass(project, mixinName, scope)?.bytecode ?: return null
+        val original = mixin.methods.firstOrNull {
+            it.name == method.name && it.desc.replace("L${mixin.name};", "L${owner.name};") == method.desc
+        } ?: return null
+        return original.findSourceElement(mixin, project, scope, canDecompile)
     }
 
     override fun matchField(owner: String, name: String, desc: String): Boolean {
@@ -101,15 +120,15 @@ data class TargetHandlerSelector(
 
     override fun matchMethod(owner: String, name: String, desc: String): Boolean {
         if (!this.mixinTargets.contains(owner)) return false
-        // if (this.owner != owner) return false
-        if (this.desc != null && desc != this.desc) return false
+        val mixinOwner = mixinName.replace('.', '/')
+        if (this.desc != null && desc != this.desc.replace("L$mixinOwner;", "L$owner;")) return false
         if (this.name != name) return false
 
         if (this.prefix != null) {
             val matchingMethods = findQualifiedClass(project, mixinName, GlobalSearchScope.allScope(project))
                 ?.findMethodsByName(name, false) ?: return false
             for (method in matchingMethods) {
-                if (method.descriptor != desc) continue
+                if (method.descriptor?.replace("L$mixinOwner;", "L$owner;") != desc) continue
                 if (!method.hasAnnotationByPrefix(prefix)) continue
 
                 return true
@@ -137,12 +156,16 @@ fun targetHandlerSelectorFromAnnotation(targetHandlerAnnotation: PsiAnnotation, 
 
     var prefix = targetHandlerAnnotation.findAttributeValue("prefix")?.constantStringValue
     if (prefix.isNullOrEmpty()) prefix = null
+    val gradleData = targetHandlerAnnotation.findModule()?.let { GradleUtil.findGradleModuleData(it) }
+    val mappingsPath = (gradleData?.children?.firstOrNull { it.key == FabricLoomData.KEY }?.data as? FabricLoomData)
+        ?.tinyMappings?.toPath()
     return TargetHandlerSelector(
         targetHandlerAnnotation.project,
         targetMixin,
         mixinTargets,
         selector.name ?: return null,
         selector.descriptor,
-        prefix
+        prefix,
+        mappingsPath,
     )
 }
